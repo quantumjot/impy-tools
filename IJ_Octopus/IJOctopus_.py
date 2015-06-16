@@ -1,3 +1,9 @@
+"""
+ImageJ plugin to load Octopus files
+
+"""
+
+
 from ij.io import FileInfo, OpenDialog, FileOpener
 from ij.ImageStack import *
 from ij.gui import GenericDialog
