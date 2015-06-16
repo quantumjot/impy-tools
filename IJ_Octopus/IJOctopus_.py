@@ -1,6 +1,8 @@
 """
-ImageJ plugin to load Octopus files
+ImageJ plugin to load Octopus camera streams files
+Lowe, A.R. 2015
 
+TODO: Add metadata from headers
 """
 
 
@@ -84,13 +86,13 @@ def open_octopus_file():
 		# open the original .dat file and get the stack
 		fi.fileName = get_octopus_filename( op.getDirectory(), file_stem, i)
 		
-		if isfile(fi.fileName):
+		if isfile( fi.fileName ):
 			fo = FileOpener(fi)
 			imp = fo.open(False).getStack() 
 	
 			# put the slices into the stack
-			for im_slice in xrange(1,1+imp.getSize()):
-				ip = imp.getProcessor(im_slice)
+			for im_slice in xrange( imp.getSize() ):
+				ip = imp.getProcessor( im_slice+1 )
 				bi = ip.get16BitBufferedImage() 
 				stack.addSlice( file_stem,  ip )
 		else:
