@@ -2,13 +2,16 @@
 ImageJ plugin to load Octopus camera streams files
 Lowe, A.R. 2015
 
-TODO: Add metadata from headers
+
+Notes:
+	150617 (ARL) Updated to include header info now.
 """
 
 
 from ij.io import FileInfo, OpenDialog, FileOpener
 from ij.ImageStack import *
 from ij.gui import GenericDialog
+from ij.measure import ResultsTable
 from ij import ImagePlus, ImageStack
 
 import re
@@ -16,10 +19,11 @@ from os.path import isfile
 from os import listdir
 
 MAX_FRAMES_TO_IMPORT = 9000
+DISPLAY_HEADER = True
 
 """ Open an Octopus file stream for ImageJ.
 """
-def open_octopus_file():
+def open_Octopus_file():
 
 	# set up a file info structure
 	fi = FileInfo()
@@ -40,21 +44,24 @@ def open_octopus_file():
 		dlg.showDialog()
 		return False
 
-	# ok now we need to parse the header info
-	header_file = open(op.getDirectory()+ op.getFileName(), 'r')
-	header_lines = header_file.readlines()
-	header_file.close()
-	fi.nImages  = len(header_lines)
-
-	# will assume that all files have the same size
-	fi.width = int( re.findall('W\:\s*(\S+)', header_lines[0])[0] )
-	fi.height = int( re.findall('H\:\s*(\S+)', header_lines[0])[0] )
-
 	# now strip the filename into a stem and index
 	file_parse = re.match('([a-zA-z0-9_]*_)([0-9]+)\.dth', op.getFileName())
 	file_stem = file_parse.group(1)
 	file_index = int( file_parse.group(2) )
 
+	# ok now we need to parse the header info
+	header = get_Octopus_header(op.getDirectory(), file_stem, file_index)
+	fi.nImages  = len(header['N'])
+
+	# will assume that all files have the same size
+	fi.width = int( header['W'][0] )
+	fi.height = int( header['H'][0] )
+
+	# make a results table for the metadata
+	# NOTE: horrible looping at the moment, but works
+	if DISPLAY_HEADER:
+		rt = ResultsTable()
+	
 	# make a new imagestack to store the data
 	stack = ImageStack(fi.width, fi.height)
 
@@ -84,7 +91,7 @@ def open_octopus_file():
 	for i in sorted_filenums:
 
 		# open the original .dat file and get the stack
-		fi.fileName = get_octopus_filename( op.getDirectory(), file_stem, i)
+		fi.fileName = get_Octopus_filename( op.getDirectory(), file_stem, i)
 		
 		if isfile( fi.fileName ):
 			fo = FileOpener(fi)
@@ -95,6 +102,14 @@ def open_octopus_file():
 				ip = imp.getProcessor( im_slice+1 )
 				bi = ip.get16BitBufferedImage() 
 				stack.addSlice( file_stem,  ip )
+
+
+			if DISPLAY_HEADER:
+				header = get_Octopus_header(op.getDirectory(), file_stem, i)
+				for n in xrange(len(header['N'])):
+					rt.incrementCounter()
+					for k in header.keys():
+						rt.addValue(k, parse_header( header[k][n] ) )
 		else:
 			break
 
@@ -102,13 +117,58 @@ def open_octopus_file():
 	output = ImagePlus('Octopus ('+file_stem+')', stack)
 	output.show()
 
+	if DISPLAY_HEADER:
+		rt.show("Octopus header metadata")
+
 	return True
+
+
+
 
 
 """ Function to return a complete Octopus filename
 """
-def get_octopus_filename(pth, stem, index, ext=".dat"):
+def get_Octopus_filename(pth, stem, index, ext=".dat"):
 	return pth + stem + str(index) + ext
 
 
-open_octopus_file()
+
+
+
+
+""" Function to parse and return the Octopus header info as a dictionary
+"""
+def get_Octopus_header(pth, stem, index):
+	# open the header file, read the lines and close it
+	header_filename = get_Octopus_filename(pth, stem, index, ext=".dth")
+	try:
+		header_file = open(header_filename, 'r')
+	except IOError:
+		raise IOError("Cannot open header file")
+	
+	header_lines = header_file.readlines()
+	header_file.close()
+
+	# parse the header info
+	header_vals = zip(* [ re.findall('\S+:\s*(\S+)',line) for line in header_lines ])
+	header_keys = re.findall('(\w*)\s*:\s*',header_lines[0])
+
+	headers = {}
+
+	for k in header_keys:
+		headers[k] = header_vals[header_keys.index(k)]
+	return headers
+
+
+""" Parse the header to deal with bool values.
+"""
+def parse_header(header_val):
+	if header_val == "True":
+		return 1
+	elif header_val == "False":
+		return 0
+	else:
+		return float(header_val)
+
+
+open_Octopus_file()
