@@ -21,9 +21,8 @@ considered the file stem, and '1' the sequence number. The corresponding .dth
 file contains the header information for these images. Thiss encodes the 
 particulars of the instrument at the moment the camera acquisition occurs. 
 
-
-This plugin will load an Octopus stre sequence of 16-bit unsigned (short) images into ImageJ 
-memory as a stack, and load the metadata into a results table for easy viewing.
+This plugin will load an Octopus stream into ImageJ as a 16-bit unsigned (short)
+stack, and load the metadata into a results table for easy viewing.
 
 Note that the plugin limits the number of frames into memory to prevent too
 much memory being utilised.
