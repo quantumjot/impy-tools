@@ -1,9 +1,37 @@
 """
-ImageJ plugin to load Octopus camera streams files
+ImageJ plugin to load Octopus camera streams files. 
+
+Output from the microscope control software (Octopus) is saved as as stream
+of two file types:
+
+	.dth - header/metadata in plain text
+	.dat - 16-bit unsigned raw binary image data
+
+The streaming split the files into chunks of (usually, although not necessarily
+always) 100 frame sequences. The metadata encodes the particulars of the
+instrument at the moment the camera acquisition occurs.
+
+Files are generally of the format: OctopusData_1.dat, where 'OctopusData_' is
+considered the file stem, and 1 the sequence number. The corresponding .dth 
+file contains the header information for these images. This plugin will load 
+a sequence of 16-bit unsigned (short) images into ImageJ memory as a stack, 
+and load the metadata into a results table for easy viewing.
+
+Note that the plugin limits the number of frames into memory to prevent too
+much memory being utilised.
+
 Lowe, A.R. 2015
+code@arlowe.co.uk
+
+Functions:
+	open_Octopus_file()
 
 
 Notes:
+	Would be nice to give the user some control over how many files loaded,
+	the range etc.
+
+Changes:
 	150617 (ARL) Updated to include header info now.
 """
 
@@ -13,7 +41,6 @@ from ij.ImageStack import *
 from ij.gui import GenericDialog
 from ij.measure import ResultsTable
 from ij import ImagePlus, ImageStack
-
 import re
 from os.path import isfile
 from os import listdir
@@ -110,10 +137,11 @@ def open_Octopus_file():
 					rt.incrementCounter()
 					for k in header.keys():
 						rt.addValue(k, parse_header( header[k][n] ) )
+
 		else:
 			break
 
-
+	# done!
 	output = ImagePlus('Octopus ('+file_stem+')', stack)
 	output.show()
 
