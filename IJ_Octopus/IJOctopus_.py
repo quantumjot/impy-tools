@@ -7,15 +7,23 @@ of two file types:
 	.dth - header/metadata in plain text
 	.dat - 16-bit unsigned raw binary image data
 
-The streaming split the files into chunks of (usually, although not necessarily
-always) 100 frame sequences. The metadata encodes the particulars of the
-instrument at the moment the camera acquisition occurs.
+The software splits the stream into chunks of (usually, although not necessarily
+always) 100 frames, appending a sequence number to the end of the filename:
 
-Files are generally of the format: OctopusData_1.dat, where 'OctopusData_' is
-considered the file stem, and 1 the sequence number. The corresponding .dth 
-file contains the header information for these images. This plugin will load 
-a sequence of 16-bit unsigned (short) images into ImageJ memory as a stack, 
-and load the metadata into a results table for easy viewing.
+ 	OctopusData_1.dat
+ 	OctopusData_1.dth
+ 	OctopusData_2.dat
+ 	OctopusData_2.dth
+ 	...
+
+Files are generally of the format: OctopusData_1.dat, where 'OctopusData_' is 
+considered the file stem, and '1' the sequence number. The corresponding .dth 
+file contains the header information for these images. Thiss encodes the 
+particulars of the instrument at the moment the camera acquisition occurs. 
+
+
+This plugin will load an Octopus stre sequence of 16-bit unsigned (short) images into ImageJ 
+memory as a stack, and load the metadata into a results table for easy viewing.
 
 Note that the plugin limits the number of frames into memory to prevent too
 much memory being utilised.
