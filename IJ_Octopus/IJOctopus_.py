@@ -1,5 +1,5 @@
 """
-ImageJ plugin to load Octopus camera streams files. 
+ImageJ plugin to load Octopus camera stream files. 
 
 Output from the microscope control software (Octopus) is saved as as stream
 of two file types:
@@ -44,7 +44,6 @@ Changes:
 
 
 from ij.io import FileInfo, OpenDialog, FileOpener
-from ij.ImageStack import *
 from ij.gui import GenericDialog
 from ij.measure import ResultsTable
 from ij import ImagePlus, ImageStack
@@ -52,7 +51,7 @@ import re
 from os.path import isfile
 from os import listdir
 
-MAX_FRAMES_TO_IMPORT = 9000
+MAX_FRAMES_TO_IMPORT = 1000
 DISPLAY_HEADER = True
 
 """ Open an Octopus file stream for ImageJ.
