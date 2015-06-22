@@ -47,12 +47,14 @@ from ij.io import FileInfo, OpenDialog, FileOpener
 from ij.gui import GenericDialog
 from ij.measure import ResultsTable
 from ij import ImagePlus, ImageStack
+import ij.IJ as IJ
+
 import re
 from os.path import isfile
 from os import listdir
+from time import strftime, gmtime
 
 MAX_FRAMES_TO_IMPORT = 1000
-DISPLAY_HEADER = True
 
 """ Open an Octopus file stream for ImageJ.
 """
@@ -66,14 +68,14 @@ def open_Octopus_file():
 	fi.nImages = 1
 
 	op = OpenDialog("Choose Octopus .dth file...", "")
-	print "Opening file: " + op.getDirectory() + op.getFileName()
+	
 
 	# get the file extension
 	file_extension = re.search('(\.[a-z][a-z][a-z])', op.getFileName()).group(1)
 	
 	if file_extension != ".dth":
-		dlg = GenericDialog('Warning')
-		dlg.addMessage('Please select an octopus .dth file')
+		dlg = GenericDialog("Warning")
+		dlg.addMessage("Please select an octopus .dth file")
 		dlg.showDialog()
 		return False
 
@@ -89,12 +91,10 @@ def open_Octopus_file():
 	# will assume that all files have the same size
 	fi.width = int( header['W'][0] )
 	fi.height = int( header['H'][0] )
+	file_timestamp = strftime("%a, %d %b %Y %H:%M:%S", gmtime(float(header['Time'][0])) )
+	file_stats_str = file_stem + '\n' + str(fi.width) +'x' + str(fi.height) + 'x' + \
+		str(len(sorted_filenums)) +' (16-bit)\n' + file_timestamp
 
-	# make a results table for the metadata
-	# NOTE: horrible looping at the moment, but works
-	if DISPLAY_HEADER:
-		rt = ResultsTable()
-	
 	# make a new imagestack to store the data
 	stack = ImageStack(fi.width, fi.height)
 
@@ -103,7 +103,7 @@ def open_Octopus_file():
 	try:
 		files = listdir(op.getDirectory())
 	except IOError:
-		raise IOError( 'No files exist in directory: ' + op.getDirectory())
+		raise IOError( "No files exist in directory: " + op.getDirectory())
 
 	filenums = []
 	for f in files:
@@ -120,8 +120,38 @@ def open_Octopus_file():
 	if len(sorted_filenums) * fi.nImages > MAX_FRAMES_TO_IMPORT:
 		sorted_filenums = sorted_filenums[0:int(MAX_FRAMES_TO_IMPORT / fi.nImages)]
 
+	# now open a dialog to let the user set options
+	
+	dlg = GenericDialog("Load Octopus Stream")
+	dlg.addMessage(file_stats_str)
+	dlg.addStringField("Title: ", file_stem)
+	dlg.addNumericField("Start: ", sorted_filenums[0], 0);
+	dlg.addNumericField("End: ", sorted_filenums[-1], 0)
+	dlg.addCheckbox("Open headers", True)
+	dlg.showDialog()
+
+	# if we cancel the dialog, exit here
+	if dlg.wasCanceled():
+		return
+
+	# set some params
+	file_title = dlg.getNextString()
+	file_start = dlg.getNextNumber()
+	file_end = dlg.getNextNumber()
+	DISPLAY_HEADER = bool( dlg.getNextBoolean() )
+
+	files_to_open = [n for n in sorted_filenums if n>=file_start and n<=file_end]
+
+	IJ.log( "Opening file: " + op.getDirectory() + op.getFileName() )
+	IJ.log( file_stats_str )
+
+	# make a results table for the metadata
+	# NOTE: horrible looping at the moment, but works
+	if DISPLAY_HEADER:
+		rt = ResultsTable()
+
 	# ok now we can put the files together into the stack
-	for i in sorted_filenums:
+	for i in files_to_open:
 
 		# open the original .dat file and get the stack
 		fi.fileName = get_Octopus_filename( op.getDirectory(), file_stem, i)
@@ -134,7 +164,7 @@ def open_Octopus_file():
 			for im_slice in xrange( imp.getSize() ):
 				ip = imp.getProcessor( im_slice+1 )
 				bi = ip.get16BitBufferedImage() 
-				stack.addSlice( file_stem,  ip )
+				stack.addSlice( file_title,  ip )
 
 
 			if DISPLAY_HEADER:
