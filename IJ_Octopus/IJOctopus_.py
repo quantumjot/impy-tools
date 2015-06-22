@@ -40,6 +40,7 @@ Notes:
 
 Changes:
 	150617 (ARL) Updated to include header info now.
+	150622 (ARL) Added a dialog to allow more control over opening.
 """
 
 
@@ -92,8 +93,7 @@ def open_Octopus_file():
 	fi.width = int( header['W'][0] )
 	fi.height = int( header['H'][0] )
 	file_timestamp = strftime("%a, %d %b %Y %H:%M:%S", gmtime(float(header['Time'][0])) )
-	file_stats_str = file_stem + '\n' + str(fi.width) +'x' + str(fi.height) + 'x' + \
-		str(len(sorted_filenums)) +' (16-bit)\n' + file_timestamp
+	
 
 	# make a new imagestack to store the data
 	stack = ImageStack(fi.width, fi.height)
@@ -115,6 +115,10 @@ def open_Octopus_file():
 
 	# sort the file numbers
 	sorted_filenums = sorted(filenums)
+
+	# make a file stats string
+	file_stats_str = file_stem + '\n' + str(fi.width) +'x' + str(fi.height) + 'x' + \
+		str(len(sorted_filenums)) +' (16-bit)\n' + file_timestamp
 
 	# if we've got too many, truncate the list
 	if len(sorted_filenums) * fi.nImages > MAX_FRAMES_TO_IMPORT:
