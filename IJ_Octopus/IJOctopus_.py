@@ -70,7 +70,6 @@ def open_Octopus_file():
 
 	op = OpenDialog("Choose Octopus .dth file...", "")
 	
-
 	# get the file extension
 	file_extension = re.search('(\.[a-z][a-z][a-z])', op.getFileName()).group(1)
 	
@@ -108,10 +107,10 @@ def open_Octopus_file():
 	filenums = []
 	for f in files:
 		# strip off the stem, and get the number
-		targetfile = re.match('('+file_stem+')([0-9]+)\.dth', f)
+		targetfile = re.match(file_stem+'([0-9]+)\.dth', f)
 		# only take thosefiles which match the formatting requirements
 		if targetfile:
-			filenums.append( int(targetfile.group(2)) )
+			filenums.append( int(targetfile.group(1)) )
 
 	# sort the file numbers
 	sorted_filenums = sorted(filenums)
@@ -120,12 +119,8 @@ def open_Octopus_file():
 	file_stats_str = file_stem + '\n' + str(fi.width) +'x' + str(fi.height) + 'x' + \
 		str(len(sorted_filenums)) +' (16-bit)\n' + file_timestamp
 
-	# if we've got too many, truncate the list
-	if len(sorted_filenums) * fi.nImages > MAX_FRAMES_TO_IMPORT:
-		sorted_filenums = sorted_filenums[0:int(MAX_FRAMES_TO_IMPORT / fi.nImages)]
 
 	# now open a dialog to let the user set options
-	
 	dlg = GenericDialog("Load Octopus Stream")
 	dlg.addMessage(file_stats_str)
 	dlg.addStringField("Title: ", file_stem)
@@ -145,6 +140,13 @@ def open_Octopus_file():
 	DISPLAY_HEADER = bool( dlg.getNextBoolean() )
 
 	files_to_open = [n for n in sorted_filenums if n>=file_start and n<=file_end]
+
+	# if we've got too many, truncate the list
+	if len(files_to_open) * fi.nImages > MAX_FRAMES_TO_IMPORT:
+		dlg = GenericDialog("Warning")
+		dlg.addMessage("This may use a lot of memory. Continue?")
+		dlg.showDialog()
+		if dlg.wasCanceled(): return False
 
 	IJ.log( "Opening file: " + op.getDirectory() + op.getFileName() )
 	IJ.log( file_stats_str )
