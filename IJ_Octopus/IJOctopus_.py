@@ -142,14 +142,15 @@ def open_Octopus_file():
 	files_to_open = [n for n in sorted_filenums if n>=file_start and n<=file_end]
 
 	# if we've got too many, truncate the list
-	if len(files_to_open) * fi.nImages > MAX_FRAMES_TO_IMPORT:
+	if (len(files_to_open) * fi.nImages * fi.width * fi.height) > (MAX_FRAMES_TO_IMPORT*512*512):
 		dlg = GenericDialog("Warning")
 		dlg.addMessage("This may use a lot of memory. Continue?")
 		dlg.showDialog()
 		if dlg.wasCanceled(): return False
 
 	IJ.log( "Opening file: " + op.getDirectory() + op.getFileName() )
-	IJ.log( file_stats_str )
+	IJ.log( file_stats_str + "\nFile range: " + str(files_to_open[0]) + \
+		"-" + str(files_to_open[-1]) +"\n" )
 
 	# make a results table for the metadata
 	# NOTE: horrible looping at the moment, but works
