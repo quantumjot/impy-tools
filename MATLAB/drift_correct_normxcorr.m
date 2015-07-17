@@ -21,9 +21,17 @@
 
 function [varargout] = drift_correct_normxcorr(molecules)
 
+if gpuDeviceCount > 0
+    USE_GPU = 1;
+    disp('Found a GPU device...');
+else
+    USE_GPU = 0;
+end
+
+
 % user parameters
-bin_size = .2;              % fraction of a CCD pixel
-frames_per_stack = 1500;     % number of camera frames per intermediate image
+bin_size = .1;              % fraction of a CCD pixel
+frames_per_stack = 100;     % number of camera frames per intermediate image
 max_drift = 10;              % maximum drift in (bin_size) pixels between frame stacks
 CCD_size = 512.;            % CCD size
 
@@ -43,13 +51,9 @@ disp(sprintf('Calculating image stack (%d x %d, binsize: %2.2f, localisations: %
 num_images_in_stack = 1;
 
 for i = 1:stack_size
-    [xy] = molecules(find(molecules(:,1)>=(i-1)*frames_per_stack & molecules(:,1)<=i*frames_per_stack),:);
-    current_image = uint8(zeros(output_image_size, output_image_size ));
-    for k = 1:length(xy)
-        binx = floor((1.0/bin_size)*(xy(k,2)-0.5*bin_size));
-        biny = floor((1.0/bin_size)*(xy(k,3)-0.5*bin_size));
-        current_image(binx,biny) = current_image(binx,biny) + 1; 
-    end
+    [xy] = molecules(molecules(:,1)>=(i-1)*frames_per_stack & molecules(:,1)<=i*frames_per_stack,:);   
+    [current_image] = quick_localisation_image(xy, bin_size, CCD_size);
+    
     time_stack(:,:,i) = current_image;
     num_images_in_stack=num_images_in_stack+1; 
 end
@@ -72,8 +76,12 @@ for i = 2:num_images_in_stack-1
     disp(sprintf('Completed %d of %d stacks...',i,num_images_in_stack-1));
     
     compare_image = time_stack(:,:,i);
-    % calculate teh normalised cross correlation, and mask it
-    [c] = normxcorr2(reference_image, compare_image);
+    % calculate the normalised cross correlation, and mask it
+    if USE_GPU
+        [c] = normxcorr2(gpuArray(compare_image), gpuArray(reference_image));
+    else
+        [c] = normxcorr2(compare_image, reference_image);
+    end
     c = (c.* mask);
     
     % now calculate the position of the maximum and the offset required
@@ -112,4 +120,27 @@ if (nargout > 1)
     varargout{2} = drift_vector;
 end
 
+return
+
+
+function [output_image] = quick_localisation_image(molecules, bin_size, CCD_size)
+
+% calculate the bins in a fast way
+binx = 1+floor((1.0/bin_size)*(molecules(:,2)-0.5*bin_size));
+biny = 1+floor((1.0/bin_size)*(molecules(:,3)-0.5*bin_size));
+bins = [binx, biny];
+
+% sanity check that we haven't exceeded bounds
+min_bin = 1;
+max_bin = [CCD_size./bin_size, CCD_size./bin_size];
+
+% make some space for the new image
+output_image = uint8(zeros(max_bin));
+
+bins_to_exclude = (bins(:,1)<min_bin | bins(:,2)<min_bin | bins(:,1)>max_bin(1) | bins(:,2)>max_bin(2));
+bins(bins_to_exclude,:) = [];
+
+% now make the 2D histogram of the data, using the sparse matrix trick
+[output_hist] = uint16(full(sparse(bins(:,1), bins(:,2), 1)));
+output_image(1:size(output_hist,1),1:size(output_hist,2)) = output_hist;
 return
