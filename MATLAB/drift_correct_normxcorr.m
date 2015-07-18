@@ -32,8 +32,8 @@ end
 % user parameters
 bin_size = .1;              % fraction of a CCD pixel
 frames_per_stack = 100;     % number of camera frames per intermediate image
-max_drift = 10;              % maximum drift in (bin_size) pixels between frame stacks
-CCD_size = 512.;            % CCD size
+max_drift = 1./bin_size;    % maximum drift in CCD pixels between frame stacks
+CCD_size = 250.;            % CCD size
 
 %%
 % set up some initial parameters
@@ -48,14 +48,15 @@ time_stack = uint16(zeros(output_image_size ,output_image_size, stack_size));
 %%
 % calculate the frames of the image stack
 disp(sprintf('Calculating image stack (%d x %d, binsize: %2.2f, localisations: %d)...',output_image_size,output_image_size,bin_size,size(molecules,1)));
-num_images_in_stack = 1;
+num_images_in_stack = 0;
 
 for i = 1:stack_size
     [xy] = molecules(molecules(:,1)>=(i-1)*frames_per_stack & molecules(:,1)<=i*frames_per_stack,:);   
     [current_image] = quick_localisation_image(xy, bin_size, CCD_size);
-    
-    time_stack(:,:,i) = current_image;
-    num_images_in_stack=num_images_in_stack+1; 
+    if sum(current_image(:)) > 0
+        time_stack(:,:,num_images_in_stack+1) = current_image;
+        num_images_in_stack=num_images_in_stack+1;
+    end
 end
 
 %%
@@ -70,10 +71,10 @@ mask(output_image_size-max_drift:output_image_size+max_drift,output_image_size-m
 %%
 % now do a normalised cross correlation for each of the later images in the
 % time stack
-for i = 2:num_images_in_stack-1
+for i = 2:num_images_in_stack
 
     % give the user a progress update
-    disp(sprintf('Completed %d of %d stacks...',i,num_images_in_stack-1));
+    disp(sprintf('Completed %d of %d stacks...',i,num_images_in_stack));
     
     compare_image = time_stack(:,:,i);
     % calculate the normalised cross correlation, and mask it
