@@ -69,7 +69,7 @@ def open_Octopus_file():
 	fi.nImages = 1
 
 	op = OpenDialog("Choose Octopus .dth file...", "")
-	if op.wasCanceled(): return False
+	if not op.getDirectory(): return False
 
 	# get the file extension
 	file_extension = re.search('(\.[a-z][a-z][a-z])', op.getFileName()).group(1)
@@ -126,7 +126,7 @@ def open_Octopus_file():
 	dlg.addMessage(file_stats_str)
 	dlg.addStringField("Title: ", file_stem)
 	dlg.addNumericField("Start: ", 1, 0);
-	dlg.addNumericField("End: ", length(sorted_filenums), 0)
+	dlg.addNumericField("End: ", len(sorted_filenums), 0)
 	dlg.addCheckbox("Open headers", True)
 	dlg.addCheckbox("Contiguous stream?", False)
 	dlg.showDialog()
@@ -146,12 +146,12 @@ def open_Octopus_file():
 		file_start, file_end = file_end, file_start
 	if file_start < 1: 
 		file_start = 1
-	if file_end > length(sorted_filenums): 
-		file_end = length(sorted_filenums) 
+	if file_end > len(sorted_filenums): 
+		file_end = len(sorted_filenums) 
 
 	# now set these to the actual file numbers in the stream
-	file_start = sorted_filenums[file_start-1]
-	file_end = sorted_filenums[file_end-1]
+	file_start = sorted_filenums[int(file_start)-1]
+	file_end = sorted_filenums[int(file_end)-1]
 
 	files_to_open = [n for n in sorted_filenums if n>=file_start and n<=file_end]
 
