@@ -14,7 +14,9 @@ end
 % get the header data for the frame number
 header = OInfo.headers(frame_number);
 frame_size = [str2double(header.W) str2double(header.H)]; %TODO: sort out types
-file_offset = (frame_number-1)*frame_size(1)*frame_size(2);
+
+% get the offset, i.e. frame number within the file
+file_offset = str2double(header.N)*frame_size(1)*frame_size(2);
 
 try
     data_file = fopen(strcat(header.filename,'.dat'), 'r');

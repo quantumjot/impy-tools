@@ -50,7 +50,6 @@ headers = [];
 for f = 1:OInfo.num_files
     [header_filename] = strcat(path, '/', file_stem, num2str(OInfo.file_indices(f)));
     [header] = Octopus_open_header(header_filename);
-    % TODO: adjust the frame numbers
     headers = cat(1,headers, header);
 end
 
