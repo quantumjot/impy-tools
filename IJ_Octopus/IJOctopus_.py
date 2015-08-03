@@ -5,7 +5,7 @@ Output from the microscope control software (Octopus) is saved as as stream
 of two file types:
 
 	.dth - header/metadata in plain text
-	.dat - 16-bit unsigned raw binary image data
+	.dat - 8/16-bit unsigned raw binary image data
 
 The software splits the stream into chunks of (usually, although not necessarily
 always) 100 frames, appending a sequence number to the end of the filename:
@@ -21,7 +21,7 @@ considered the file stem, and '1' the sequence number. The corresponding .dth
 file contains the header information for these images. Thiss encodes the 
 particulars of the instrument at the moment the camera acquisition occurs. 
 
-This plugin will load an Octopus stream into ImageJ as a 16-bit unsigned (short)
+This plugin will load an Octopus stream into ImageJ as a 8/16-bit unsigned (short)
 stack, and load the metadata into a results table for easy viewing.
 
 Note that the plugin limits the number of frames into memory to prevent too
@@ -41,6 +41,7 @@ Notes:
 Changes:
 	150617 (ARL) Updated to include header info now.
 	150622 (ARL) Added a dialog to allow more control over opening.
+	150803 (ARL) Options for bit-depth for new octopus format
 """
 
 
@@ -51,8 +52,7 @@ from ij import ImagePlus, ImageStack
 import ij.IJ as IJ
 
 import re
-from os.path import isfile
-from os import listdir
+import os
 from time import strftime, gmtime
 
 MAX_FRAMES_TO_IMPORT = 1000
@@ -89,6 +89,14 @@ def open_Octopus_file():
 	header = get_Octopus_header(op.getDirectory(), file_stem, file_index)
 	fi.nImages  = len(header['N'])
 
+	# check to see whether we have a bit depth, if not, assume 16-bit
+	if 'Bit_Depth' in header:
+		print header['Bit_Depth']
+		bit_depth = int(header['Bit_Depth'][0])
+		if bit_depth == 8: fi.fileType = FileInfo.GRAY8
+	else:
+		bit_depth = 16
+
 	# will assume that all files have the same size
 	fi.width = int( header['W'][0] )
 	fi.height = int( header['H'][0] )
@@ -101,7 +109,7 @@ def open_Octopus_file():
 	# finally, we need to make a list of files to import as sometimes we have
 	# non contiguous file numbers
 	try:
-		files = listdir(op.getDirectory())
+		files = os.listdir(op.getDirectory())
 	except IOError:
 		raise IOError( "No files exist in directory: " + op.getDirectory())
 
@@ -118,7 +126,7 @@ def open_Octopus_file():
 
 	# make a file stats string
 	file_stats_str = file_stem + '\n' + str(fi.width) +'x' + str(fi.height) + 'x' + \
-		str(len(sorted_filenums)) +' (16-bit)\n' + file_timestamp
+		str(len(sorted_filenums)) +' ('+str(bit_depth)+'-bit)\n' + file_timestamp
 
 
 	# now open a dialog to let the user set options
@@ -129,6 +137,7 @@ def open_Octopus_file():
 	dlg.addNumericField("End: ", len(sorted_filenums), 0)
 	dlg.addCheckbox("Open headers", True)
 	dlg.addCheckbox("Contiguous stream?", False)
+	dlg.addCheckbox("8-bit unsigned", bit_depth==8)
 	dlg.showDialog()
 
 	# if we cancel the dialog, exit here
@@ -177,14 +186,17 @@ def open_Octopus_file():
 		# open the original .dat file and get the stack
 		fi.fileName = get_Octopus_filename( op.getDirectory(), file_stem, i)
 		
-		if isfile( fi.fileName ):
+		if os.path.isfile( fi.fileName ):
 			fo = FileOpener(fi)
 			imp = fo.open(False).getStack() 
 	
 			# put the slices into the stack
 			for im_slice in xrange( imp.getSize() ):
 				ip = imp.getProcessor( im_slice+1 )
-				bi = ip.get16BitBufferedImage() 
+				if bit_depth == 8:
+					bi = ip.getBufferedImage()
+				else:
+					bi = ip.get16BitBufferedImage() 
 				stack.addSlice( file_title,  ip )
 
 
@@ -214,7 +226,7 @@ def open_Octopus_file():
 """ Function to return a complete Octopus filename
 """
 def get_Octopus_filename(pth, stem, index, ext=".dat"):
-	return pth + stem + str(index) + ext
+	return os.path.join(pth, stem + str(index) + ext)
 
 
 
