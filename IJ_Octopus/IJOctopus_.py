@@ -44,6 +44,10 @@ Changes:
 	150803 (ARL) Options for bit-depth for new octopus format
 """
 
+__version__ = "1.2"
+__author__ = "Alan R. Lowe"
+__email__ = "code@arlowe.co.uk"
+
 
 from ij.io import FileInfo, OpenDialog, FileOpener
 from ij.gui import GenericDialog
@@ -130,7 +134,7 @@ def open_Octopus_file():
 
 
 	# now open a dialog to let the user set options
-	dlg = GenericDialog("Load Octopus Stream")
+	dlg = GenericDialog("Load Octopus Stream (v"+__version__+")")
 	dlg.addMessage(file_stats_str)
 	dlg.addStringField("Title: ", file_stem)
 	dlg.addNumericField("Start: ", 1, 0);
