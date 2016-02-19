@@ -1,5 +1,11 @@
 % Easy class definition for the OctopusLoader - massively simplifies
-% dealing with data streams
+% dealing with data streams.
+%
+% Usage:
+%   OData = OctopusLoader('/Users/ubcg83a/Data/STORM/', 'Calibration9_')
+%   frame = OData.get_frame(100)
+%   frame,header = OData.get_frame(100)
+%
 % ARL 2016/02/19
 
 classdef OctopusLoader
@@ -29,7 +35,6 @@ classdef OctopusLoader
             else
                 error('OctopusLoader: data stream not loaded');
             end
-        end
-                
+        end       
     end
 end
