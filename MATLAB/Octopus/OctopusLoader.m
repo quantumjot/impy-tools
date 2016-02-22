@@ -198,8 +198,8 @@ frame_size = [str2double(header.W) str2double(header.H)]; %TODO: sort out types
 
 % check to see whether there is a 'bit_depth' field
 BIT_DEPTH = 'uint16=>uint16';   % default bit depth
-if isfield(header, 'bit_depth')
-    switch header.bit_depth
+if isfield(header, 'Bit_Depth')
+    switch header.Bit_Depth
         case '8'
             BIT_DEPTH = 'uint8=>uint8';
         case '16'
