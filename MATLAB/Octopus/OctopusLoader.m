@@ -198,19 +198,23 @@ frame_size = [str2double(header.W) str2double(header.H)]; %TODO: sort out types
 
 % check to see whether there is a 'bit_depth' field
 BIT_DEPTH = 'uint16=>uint16';   % default bit depth
+bytes_per_chunk = 2;
 if isfield(header, 'Bit_Depth')
     switch header.Bit_Depth
         case '8'
             BIT_DEPTH = 'uint8=>uint8';
+            bytes_per_chunk = 1;
         case '16'
             BIT_DEPTH = 'uint16=>uint16';
+            bytes_per_chunk = 2;
         otherwise
             BIT_DEPTH = 'uint16=>uint16';
+            bytes_per_chunk = 2;
     end
 end
 
 % get the offset, i.e. frame number within the file
-file_offset = str2double(header.N)*frame_size(1)*frame_size(2);
+file_offset = str2double(header.N)*frame_size(1)*frame_size(2)*bytes_per_chunk;
 
 try
     data_file = fopen(strcat(header.filename,'.dat'), 'r');
