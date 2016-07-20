@@ -5,3 +5,4 @@ A set of associated tools for ImPy, including an ImageJ plugin for reading in Oc
 
 MATLAB - MATLAB scripts and functions to manipulated Octopus data streams
 IJ_Octopus - An ImageJ (Python) plugin to import Octopus streams
+IJ_Classifier - An ImageJ (Python) plugin to generate training data for classifiers
