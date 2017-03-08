@@ -2,7 +2,7 @@
 % dealing with data streams.
 %
 % Usage:
-%   OData = OctopusLoader('/Users/ubcg83a/Data/STORM/Calibration9_')
+%   OData = OctopusLoader('./SMLM/Calibration9_')
 %   frame = OData.get_frame(100)
 %   frame,header = OData.get_frame(100)
 %   header = OData.get_header(100)

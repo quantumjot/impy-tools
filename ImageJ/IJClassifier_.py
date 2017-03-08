@@ -39,7 +39,7 @@ DEFAULT_OUTPUT_PATH = "/Users/ubcg83a/Desktop/test/"
 class IJClassifier_(object):
 	def __init__(self):
 		self.path = DEFAULT_OUTPUT_PATH
-		self.window_size = 30
+		self.window_size = 32
 
 	def __call__(self):
 
@@ -204,6 +204,7 @@ class ClassifierROI(object):
 
 		self.__classifier_path = path
 
+
 	@property 
 	def name(self):
 		return self.__ROI.getName()
@@ -245,10 +246,12 @@ class ClassifierROI(object):
 		if not isinstance(data, ImagePlus):
 			raise TypeError("ClassiferROI: image stack data must be of type ImageStack")
 
-
+		print self.name, len(self)
+		
 		for i in xrange(len(self)):
 
 			x,y = self[i]
+
 			temp_ROI = Roi(x-self.window_size, y-self.window_size, self.window_size*2, self.window_size*2)
 
 			new_im = self.grab(data, temp_ROI)
@@ -280,7 +283,10 @@ class ClassifierROI(object):
 		"""
 		
 		# go to the frame number, copy the region of the image, rename it then save it
-		data.setPosition(self.index)
+		try:
+			data.setPosition(self.index)
+		except:
+			print 'Not an image stack!'
 		data.setRoi(temp_ROI, False)
 		data.copy()
 
