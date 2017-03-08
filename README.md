@@ -3,6 +3,7 @@
 A set of tools for manipulating and converting data using ImageJ and MATLAB. These should be relatively
 intuitive in their use.
 
+<<<<<<< HEAD
 ## Functions/Loaders
 
 + MATLAB scripts and functions to manipulated Octopus data streams, or load single-molecule data from ThunderSTORM.
@@ -38,3 +39,10 @@ method used, and should label all headers correctly in the results table. Can be
 ```sh
 molecules = ThunderSTORMLoader('./SMLM/PALM_mEOS9M_.csv');
 ```
+=======
+MATLAB - MATLAB scripts and functions to manipulated Octopus data streams
+
+IJ_Octopus - An ImageJ (Python) plugin to import Octopus streams
+
+IJ_Classifier - An ImageJ (Python) plugin to generate training data for classifiers
+>>>>>>> origin/master
